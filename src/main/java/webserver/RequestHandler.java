@@ -47,9 +47,14 @@ public class RequestHandler extends Thread {
             getPostRequest(br, contentLength);
 
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
-
-            response200Header(dos, body.length);
+            byte[] body;
+            if (contentLength != 0) {
+                body = Files.readAllBytes(new File("./webapp/index.html").toPath());
+                response302Header(dos, body.length);
+            } else {
+                body = Files.readAllBytes(new File("./webapp" + url).toPath());
+                response200Header(dos, body.length);
+            }
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -60,9 +65,13 @@ public class RequestHandler extends Thread {
         if (contentLength != 0) {
             String params = IOUtils.readData(br, contentLength);
             Map<String, String> sm = HttpRequestUtils.parseQueryString(params);
-            User user = new User(URLDecoder.decode(sm.get("userId"), "UTF8"), URLDecoder.decode(sm.get("password"), "UTF8"), URLDecoder.decode(sm.get("name"), "UTF8"), URLDecoder.decode(sm.get("email"), "UTF8"));
-            db.addUser(user);
+            signUpUser(sm);
         }
+    }
+
+    private void signUpUser(Map<String, String> sm) throws UnsupportedEncodingException {
+        User user = new User(URLDecoder.decode(sm.get("userId"), "UTF8"), URLDecoder.decode(sm.get("password"), "UTF8"), URLDecoder.decode(sm.get("name"), "UTF8"), URLDecoder.decode(sm.get("email"), "UTF8"));
+        db.addUser(user);
     }
 
     private static int getContentLength(String line, int contentLength) {
@@ -82,6 +91,7 @@ public class RequestHandler extends Thread {
             log.error(e.getMessage());
         }
     }
+
     private void response302Header(DataOutputStream dos, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 302 OK \r\n");
