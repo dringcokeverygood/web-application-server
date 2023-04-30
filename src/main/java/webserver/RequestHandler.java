@@ -43,12 +43,8 @@ public class RequestHandler extends Thread {
                 contentLength = getContentLength(line, contentLength);
                 line = br.readLine();
             }
-            if (contentLength != 0) {
-                String params = IOUtils.readData(br, contentLength);
-                Map<String, String> sm = HttpRequestUtils.parseQueryString(params);
-                User user = new User(URLDecoder.decode(sm.get("userId"), "UTF8"), URLDecoder.decode(sm.get("password"), "UTF8"), URLDecoder.decode(sm.get("name"), "UTF8"), URLDecoder.decode(sm.get("email"), "UTF8"));
-                db.addUser(user);
-            }
+
+            getPostRequest(br, contentLength);
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
@@ -57,6 +53,15 @@ public class RequestHandler extends Thread {
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
+        }
+    }
+
+    private void getPostRequest(BufferedReader br, int contentLength) throws IOException {
+        if (contentLength != 0) {
+            String params = IOUtils.readData(br, contentLength);
+            Map<String, String> sm = HttpRequestUtils.parseQueryString(params);
+            User user = new User(URLDecoder.decode(sm.get("userId"), "UTF8"), URLDecoder.decode(sm.get("password"), "UTF8"), URLDecoder.decode(sm.get("name"), "UTF8"), URLDecoder.decode(sm.get("email"), "UTF8"));
+            db.addUser(user);
         }
     }
 
