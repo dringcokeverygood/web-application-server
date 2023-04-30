@@ -15,7 +15,8 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* 
+* https request는 inputstream 방식을 통해 가져올 수 있다. 이후 inputstreamreader와 bufferedreader로 한줄씩
+읽어내고, url을 바이트 코드로 변환해 파일 위치를 찾아 html을 뿌려준다. 
 
 ### 요구사항 2 - get 방식으로 회원가입
 * 
