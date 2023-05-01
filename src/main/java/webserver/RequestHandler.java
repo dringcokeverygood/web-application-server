@@ -46,11 +46,15 @@ public class RequestHandler extends Thread {
 
             getPostRequest(br, contentLength);
 
+            if ("/user/create".equals(url)) {
+                url = "/index.html";
+            }
+
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body;
             if (contentLength != 0) {
-                body = Files.readAllBytes(new File("./webapp/index.html").toPath());
-                response302Header(dos, body.length);
+                body = Files.readAllBytes(new File("./webapp" + url).toPath());
+                response302Header(dos, url);
             } else {
                 body = Files.readAllBytes(new File("./webapp" + url).toPath());
                 response200Header(dos, body.length);
@@ -75,7 +79,7 @@ public class RequestHandler extends Thread {
     }
 
     private static int getContentLength(String line, int contentLength) {
-        if (line.split(" ")[0].equals("Content-Length:")) {
+        if (line.contains("Content-Length:")) {
             contentLength = Integer.parseInt(line.split(" ")[1]);
         }
         return contentLength;
@@ -92,11 +96,10 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response302Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private void response302Header(DataOutputStream dos, String url) {
         try {
-            dos.writeBytes("HTTP/1.1 302 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location : " + url + " \r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
