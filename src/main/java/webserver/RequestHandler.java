@@ -36,10 +36,18 @@ public class RequestHandler extends Thread {
             String[] tokens = line.split(" ");
             String url = tokens[1];
 
+            boolean logined = false;
             int contentLength = 0;
+
+
             while (line != null && !line.equals("")) {
                 contentLength = getContentLength(line, contentLength);
                 line = br.readLine();
+                if (line.contains("Cookie")) {
+                    Map<String, String> cookies = HttpRequestUtils.parseCookies(line);
+                    String loginedString = cookies.get("logined");
+                    logined = Boolean.parseBoolean(loginedString);
+                }
             }
 
             Map<String, String> sm = new HashMap<>();
@@ -68,7 +76,6 @@ public class RequestHandler extends Thread {
                 }
             }
 
-
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body;
             body = Files.readAllBytes(new File("./webapp" + url).toPath());
@@ -80,6 +87,9 @@ public class RequestHandler extends Thread {
             }
             if (contentLength == 0) {
                 response200Header(dos, body.length);
+            }
+            if (logined) {
+
             }
             responseBody(dos, body);
         } catch (IOException e) {
