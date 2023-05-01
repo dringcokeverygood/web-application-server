@@ -19,16 +19,18 @@
 읽어내고, url을 바이트 코드로 변환해 파일 위치를 찾아 html을 뿌려준다. 
 
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* get 방식의 쿼리 파라미터는 http header에 text 형태로 담겨서 온다. url이 그대로 오기때문에 HttpRequestUtils 클래스의 함수로 파라미터만 떼어내서
+사용할 수 있다.
 
 ### 요구사항 3 - post 방식으로 회원가입
-* 
+* post 방식의 요청값은 http body에 text / json 형태로 담겨서 온다. header를 미리 다 읽어내고, 한줄 뛰어 넘은 뒤 body를 읽으면 된다.
 
 ### 요구사항 4 - redirect 방식으로 이동
-* 
+* http 302 status는 redirect(Found)이다. 200으로 status를 보낼 경우 url이 html에서 보낸 form 태그 혹은 button 등의 url값인데,
+302로 응답을 보낼 경우 redirect해서 url을 응답하는 html과 별개로 다른 url을 응답할 수 있다.
 
 ### 요구사항 5 - cookie
-* 
+* 쿠키는 set-cookie를 http header에 담아서 응답해주면 된다.
 
 ### 요구사항 6 - stylesheet 적용
 * 

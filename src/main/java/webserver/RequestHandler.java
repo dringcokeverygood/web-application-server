@@ -58,8 +58,10 @@ public class RequestHandler extends Thread {
 
             if ("/user/login".equals(url)) {
                 loginRequest = true;
-                if (db.findUserById(sm.get("userId")) == null || !db.findUserById(sm.get("userId")).equals(sm.get("password"))) {
+                if (db.findUserById(sm.get("userId")) == null || !db.findUserById(sm.get("userId")).getPassword().equals(URLDecoder.decode(sm.get("password")))) {
                     url = "/user/login_failed.html";
+                    System.out.println(db.findUserById(sm.get("userId")));
+                    System.out.println(sm.get("password"));
                 } else {
                     url = "/index.html";
                     loginSuccess = true;
@@ -73,8 +75,8 @@ public class RequestHandler extends Thread {
             if (contentLength != 0 && !loginRequest) {
                 response302Header(dos, url);
             }
-            if (loginRequest) {
-                response200LoginHeader(dos, body.length, loginSuccess);
+            if (loginSuccess) {
+                response302LoginSuccessHeader(dos);
             }
             if (contentLength == 0) {
                 response200Header(dos, body.length);
@@ -108,13 +110,11 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response200LoginHeader(DataOutputStream dos, int lengthOfBodyContent, boolean loginSuccess) {
+    private void response302LoginSuccessHeader(DataOutputStream dos) {
         try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("Location : " + (loginSuccess?"/index.html":"/user/login_failed.html") + " \r\n");
-            dos.writeBytes("Set-Cookie: logined=" + loginSuccess + "\r\n");
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location : /index.html\r\n");
+            dos.writeBytes("Set-Cookie: logined= true\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
