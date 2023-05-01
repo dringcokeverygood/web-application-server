@@ -4,11 +4,9 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.xml.internal.ws.util.StreamUtils;
 import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
@@ -44,11 +42,17 @@ public class RequestHandler extends Thread {
                 line = br.readLine();
             }
 
-            getPostRequest(br, contentLength);
+            Map<String, String> sm = new HashMap<>();
+            if (contentLength != 0) {
+                String params = IOUtils.readData(br, contentLength);
+                sm = HttpRequestUtils.parseQueryString(params);
+            }
 
             if ("/user/create".equals(url)) {
                 url = "/index.html";
+                signUpUser(sm);
             }
+
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body;
@@ -62,14 +66,6 @@ public class RequestHandler extends Thread {
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
-        }
-    }
-
-    private void getPostRequest(BufferedReader br, int contentLength) throws IOException {
-        if (contentLength != 0) {
-            String params = IOUtils.readData(br, contentLength);
-            Map<String, String> sm = HttpRequestUtils.parseQueryString(params);
-            signUpUser(sm);
         }
     }
 
