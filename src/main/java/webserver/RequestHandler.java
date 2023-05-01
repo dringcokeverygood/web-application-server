@@ -53,14 +53,30 @@ public class RequestHandler extends Thread {
                 signUpUser(sm);
             }
 
+            boolean loginRequest = false;
+            boolean loginSuccess = false;
+
+            if ("/user/login".equals(url)) {
+                loginRequest = true;
+                if (db.findUserById(sm.get("userId")) == null || !db.findUserById(sm.get("userId")).equals(sm.get("password"))) {
+                    url = "/user/login_failed.html";
+                } else {
+                    url = "/index.html";
+                    loginSuccess = true;
+                }
+            }
+
 
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body;
-            if (contentLength != 0) {
-                body = Files.readAllBytes(new File("./webapp" + url).toPath());
+            body = Files.readAllBytes(new File("./webapp" + url).toPath());
+            if (contentLength != 0 && !loginRequest) {
                 response302Header(dos, url);
-            } else {
-                body = Files.readAllBytes(new File("./webapp" + url).toPath());
+            }
+            if (loginRequest) {
+                response200LoginHeader(dos, body.length, loginSuccess);
+            }
+            if (contentLength == 0) {
                 response200Header(dos, body.length);
             }
             responseBody(dos, body);
@@ -86,6 +102,19 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response200LoginHeader(DataOutputStream dos, int lengthOfBodyContent, boolean loginSuccess) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("Location : " + (loginSuccess?"/index.html":"/user/login_failed.html") + " \r\n");
+            dos.writeBytes("Set-Cookie: logined=" + loginSuccess + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
