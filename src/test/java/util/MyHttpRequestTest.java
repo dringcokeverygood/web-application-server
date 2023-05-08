@@ -1,8 +1,7 @@
 package util;
 
-import org.junit.Assert;
 import org.junit.Test;
-import webserver.HttpRequest;
+import webserver.MyHttpRequest;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,13 +9,13 @@ import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 
-public class HttpRequestTest {
+public class MyHttpRequestTest {
     private String testDirectory = "./src/test/resources/";
 
     @Test
     public void request_GET() throws Exception {
         InputStream in = new FileInputStream(new File(testDirectory + "Http_GET.txt"));
-        HttpRequest request = new HttpRequest(in);
+        MyHttpRequest request = new MyHttpRequest(in);
 
         assertEquals("GET", request.getMethod());
         assertEquals("/user/create", request.getPath());
@@ -27,7 +26,7 @@ public class HttpRequestTest {
     @Test
     public void request_POST() throws Exception {
         InputStream in = new FileInputStream(new File(testDirectory + "Http_POST.txt"));
-        HttpRequest request = new HttpRequest(in);
+        MyHttpRequest request = new MyHttpRequest(in);
 
         assertEquals("POST", request.getMethod());
         assertEquals("/user/create", request.getPath());
