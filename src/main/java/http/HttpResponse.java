@@ -1,8 +1,5 @@
 package http;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,11 +9,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class HttpResponse {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class HttpResponse {
     private static final Logger log = LoggerFactory.getLogger(HttpResponse.class);
+
     private DataOutputStream dos = null;
-    private Map<String, String> headers = new HashMap<>();
+
+    private Map<String, String> headers = new HashMap<String, String>();
 
     public HttpResponse(OutputStream out) {
         dos = new DataOutputStream(out);
@@ -52,17 +53,6 @@ public class HttpResponse {
         responseBody(contents);
     }
 
-    public void sendRedirect(String redirectUrl) {
-        try {
-            dos.writeBytes("HTTP/1.1 302 Found \r\n");
-            processHeaders();
-            dos.writeBytes("Location: " + redirectUrl + " \r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-    }
-
     private void response200Header(int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
@@ -78,6 +68,17 @@ public class HttpResponse {
             dos.write(body, 0, body.length);
             dos.writeBytes("\r\n");
             dos.flush();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public void sendRedirect(String redirectUrl) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            processHeaders();
+            dos.writeBytes("Location: " + redirectUrl + " \r\n");
+            dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
         }

@@ -30,6 +30,7 @@ public class User {
     }
 
     public boolean login(String password) {
+        System.out.println(this.password);
         return this.password.equals(password);
     }
 
