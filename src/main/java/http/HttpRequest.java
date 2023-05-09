@@ -1,4 +1,4 @@
-package webserver;
+package http;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,7 +6,6 @@ import util.HttpRequestUtils;
 import util.IOUtils;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -15,9 +14,9 @@ import java.util.Map;
 public class HttpRequest {
     private static final Logger log = LoggerFactory.getLogger(HttpRequest.class);
 
-    private String method, path;
     private Map<String, String> headers = new HashMap<>();
     private Map<String, String> params = new HashMap<>();
+    private RequestLine requestLine;
 
     public HttpRequest(InputStream in) {
         try {
@@ -27,7 +26,7 @@ public class HttpRequest {
                 return;
             }
 
-            processRequestLine(line);
+            requestLine = new RequestLine(line);
 
             line = br.readLine();
             while (!line.equals("")) {
@@ -37,47 +36,30 @@ public class HttpRequest {
                 line = br.readLine();
             }
 
-            if ("POST".equals(method)) {
+            if ("POST".equals(getMethod())) {
                 String body = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
                 params = HttpRequestUtils.parseQueryString(body);
+            } else {
+                params = requestLine.getParams();
             }
-        } catch (IOException io) {
-            log.error(io.getMessage());
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
     }
 
-    private void processRequestLine(String requestLine) {
-        log.debug("request line");
-        String[] tokens = requestLine.split(" ");
-        method = tokens[0];
-
-        if ("POST".equals(method)) {
-            path = tokens[1];
-            return;
-        }
-
-        int index = tokens[1].indexOf("?");
-        if (index == -1) {
-            path = tokens[1];
-        } else {
-            path = tokens[1].substring(0, index);
-            params = HttpRequestUtils.parseQueryString(tokens[1].substring(index + 1));
-        }
-    }
-
-    public String getMethod() {
-        return method;
+    public HttpMethod getMethod() {
+        return requestLine.getMethod();
     }
 
     public String getPath() {
-        return path;
+        return requestLine.getPath();
     }
 
     public String getHeader(String name) {
         return headers.get(name);
     }
 
-    public String getParam(String name) {
+    public String getParameter(String name) {
         return params.get(name);
     }
 }

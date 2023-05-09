@@ -1,15 +1,15 @@
-package util;
+package http;
 
+import http.MyHttpRequest;
 import org.junit.Test;
-import webserver.MyHttpRequest;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-public class MyHttpRequestTest {
+public class HttpRequestTest {
     private String testDirectory = "./src/test/resources/";
 
     @Test
@@ -33,4 +33,5 @@ public class MyHttpRequestTest {
         assertEquals("keep-alive", request.getHeader("Connection"));
         assertEquals("javajigi", request.getParameter("userId"));
     }
+
 }

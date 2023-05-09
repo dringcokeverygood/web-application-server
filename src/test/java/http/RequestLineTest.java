@@ -1,6 +1,6 @@
-package webserver;
+package http;
 
-import org.junit.Assert;
+import http.RequestLine;
 import org.junit.Test;
 
 import java.util.Map;
