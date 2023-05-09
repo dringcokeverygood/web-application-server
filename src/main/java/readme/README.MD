@@ -88,7 +88,125 @@ public class HttpRequest {
 > 2. 응답 헤더 정보를 Map<String, String>으로 관리한다.
 > 3. 응답을 보낼 때 HTML, CSS, 자바스크립트 파일을 직접 읽어 응답으로 보내는 메소드는 forward(), 다른 URL로 리다이렉트하는 메소드는 sendRedirect() 메소드를 나누어 구현한다.  
 
+--> 기존 RequestHandler의 많은 부분을 차지하던 코드는 바로 응답과 관련한 코드였다. 200응답이냐 302응답이냐에 따라 메서드를 달리했고, 
+로그인 실패, 성공에 따라 분리되는 부분도 있었다. 이런 부분을 따로 클래스로 빼내서 리팩토링해보자.  
+이 부분은 전혀 감이 잡히지 않아서 직접 하진 못하고 코드를 따라쳤다.
+```java
+package http;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class HttpResponse {
+    private static final Logger log = LoggerFactory.getLogger(HttpResponse.class);
+
+    private DataOutputStream dos = null;
+
+    private Map<String, String> headers = new HashMap<String, String>();
+
+    public HttpResponse(OutputStream out) {
+        dos = new DataOutputStream(out);
+    }
+
+    public void addHeader(String key, String value) {
+        headers.put(key, value);
+    }
+
+    public void forward(String url) {
+        try {
+            byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
+            if (url.endsWith(".css")) {
+                headers.put("Content-Type", "text/css");
+            } else if (url.endsWith(".js")) {
+                headers.put("Content-Type", "application/javascript");
+            } else {
+                headers.put("Content-Type", "text/html;charset=utf-8");
+            }
+            headers.put("Content-Length", body.length + "");
+            response200Header(body.length);
+            responseBody(body);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public void forwardBody(String body) {
+        byte[] contents = body.getBytes();
+        headers.put("Content-Type", "text/html;charset=utf-8");
+        headers.put("Content-Length", contents.length + "");
+        response200Header(contents.length);
+        responseBody(contents);
+    }
+
+    private void response200Header(int lengthOfBodyContent) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            processHeaders();
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void responseBody(byte[] body) {
+        try {
+            dos.write(body, 0, body.length);
+            dos.writeBytes("\r\n");
+            dos.flush();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    public void sendRedirect(String redirectUrl) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            processHeaders();
+            dos.writeBytes("Location: " + redirectUrl + " \r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void processHeaders() {
+        try {
+            Set<String> keys = headers.keySet();
+            for (String key : keys) {
+                dos.writeBytes(key + ": " + headers.get(key) + " \r\n");
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+}
+
+```
+forward, forwardBody에서 응답의 틀을 만들고 response~~와 sendRedriect에서 응답을 보낸다.
+- - -
+#### 5.1.2.3 다형성을 활용해 클라이언트 요청 URL에 대한 분기 처리를 제거한다.
+RequestHandler 클래스를 보면 기능이 추가될 때마다 분기분 (if/else)이 하나씩 추가되기때문에 이런 분기문을 제거하기 위해 다형성을 활용한다.
+> 1. 각 요청과 응답에 대한 처리를 담당하는 부분을 추상화해 인터페이스로 만든다.
+> 2. 각 분기문을 Controller 인터페이스를 구현하는 클래스를 만들어 분리한다.
+> 3. 이렇게 생성한 Controller 구현체를 Map<String, Controller>에 저장한다. Map의 key에 해당하는 String은 요청 URL, value에 해당하는 Controller는 Controller 구현체이다.
+> 4. 클라이언트 요청 URL에 해당하는 Controller를 찾아 service() 메소드를 호출한다.
+> 5. Controller 인터페이스를 구현하는 AbstractController 추상 클래스를 추가해 중복을 제거하고, service() 메소드에서 GET과 POST HTTP 메소드에 따라 doGet(), doPost() 메소드를 호출하도록 한다.
+
+--> 이 부분도 혼자는 못하겠어서 따라쳤다. 파일이 너무 많아서 코드는 생략
+
+## 5.2 웹 서버 리팩토링 구현 및 설명
+4장에서 구현한 HTTP 웹 서버 코드의 핵심은 RequestHandler 클래스이다. RequestHandler 클래스는 클라이언트 요청에 대한 헤더와 본문 데이터 처리, 클라이언트 
+요청에 따른 로직 처ㅣㄹ(회원가입, 로그인 등), 로직 처리 완료 후 클라이언트에 대한 응답 헤더와 본문 데이터 처리 작업으로 나뉜다. 
+클래스 하나가 너무 많은 일을 하므로 각 객체가 한가지 책임을 가지도록 설계를 개선하는 리팩토링을 진행한다.
 
 ## 🔍 1.3 처음에 배워야 하는 것들
 1. 맥 / 리눅스 사용법
